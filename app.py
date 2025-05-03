@@ -132,6 +132,17 @@ def logout():
     session.pop('cart', None)
     return redirect(url_for('home'))
 
+@app.route('/builder')
+def builder():
+    return render_template('builder.html')
+
+@app.route('/builder_preview', methods=['POST'])
+def builder_preview():
+    switch = request.form.get('switch')
+    layout = request.form.get('layout')
+    keycaps = request.form.get('keycaps')
+    return render_template('builder_preview.html', switch=switch, layout=layout, keycaps=keycaps)
+
 @app.route('/add-sample-products')
 def add_sample_products():
     sample_items = [
@@ -144,19 +155,6 @@ def add_sample_products():
     db.session.bulk_save_objects(sample_items)
     db.session.commit()
     return "Sample products added!"
-
-# ✅ NEW: Builder route
-@app.route('/builder')
-def builder():
-    return render_template('builder.html', user=current_user)
-
-# ✅ NEW: Builder Preview route (required for preview to work)
-@app.route('/builder_preview', methods=['POST'])
-def builder_preview():
-    switches = request.form.get('switches')
-    layout = request.form.get('layout')
-    case = request.form.get('case')
-    return render_template('builder_preview.html', switches=switches, layout=layout, case=case, user=current_user)
 
 if __name__ == '__main__':
     with app.app_context():
