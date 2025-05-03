@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cherry Boards | Build Preview</title>
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #1a1a1a;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar a {
+            color: #ff4d4d;
+            text-decoration: none;
+            margin: 0 15px;
+            font-weight: bold;
+        }
+        .preview-container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #1f1f1f;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #ff4d4d;
+            margin-bottom: 20px;
+        }
+        .build-details {
+            text-align: left;
+            margin-top: 20px;
+        }
+        .btn {
+            display: inline-block;
+            margin-top: 30px;
+            background-color: #ff4d4d;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #e63946;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            <a href="{{ url_for('home') }}">Home</a>
+            <a href="{{ url_for('products') }}">Products</a>
+        </div>
+        <div>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cart') }}">Cart</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('signup') }}">Sign Up</a>
+                <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="preview-container">
+        <h2>Your Custom Keyboard Build</h2>
+        <div class="build-details">
+            <p><strong>Switches:</strong> {{ switches }}</p>
+            <p><strong>Layout:</strong> {{ layout }}</p>
+            <p><strong>Case:</strong> {{ case }}</p>
+            <p><strong>Total:</strong> $175.00</p>
+        </div>
+        <a href="{{ url_for('add_custom_build') }}" class="btn">Add to Cart</a>
+    </div>
+</body>
+</html>
