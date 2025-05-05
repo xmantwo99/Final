@@ -138,10 +138,10 @@ def builder():
 
 @app.route('/builder_preview', methods=['POST'])
 def builder_preview():
-    switch = request.form.get('switch')
+    switches = request.form.get('switches')
     layout = request.form.get('layout')
-    keycaps = request.form.get('keycaps')
-    return render_template('builder_preview.html', switch=switch, layout=layout, keycaps=keycaps)
+    case = request.form.get('case')
+    return render_template('builder_preview.html', switches=switches, layout=layout, case=case)
 
 @app.route('/add-sample-products')
 def add_sample_products():
