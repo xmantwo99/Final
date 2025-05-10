@@ -115,7 +115,7 @@ def home():
     return render_template('home.html', user=current_user)
 
 @app.route('/test')
-def home():
+def test():
     return render_template('test.html', user=current_user)
 
 @app.route('/products')
