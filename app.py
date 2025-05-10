@@ -94,15 +94,23 @@ def add_sample_products():
     cursor = conn.cursor()
     
     # Check if the Products table exists, create it if not
+   
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE,
-            price REAL NOT NULL,
-            description TEXT,
-            image TEXT
+        IF NOT EXISTS (
+            SELECT * FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_NAME = 'Products'
         )
+        BEGIN
+            CREATE TABLE Products (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                name NVARCHAR(100) NOT NULL UNIQUE,
+                price FLOAT NOT NULL,
+                description NVARCHAR(300),
+                image NVARCHAR(300)
+            )
+        END
     """)
+
     
     sample_items = [
         ("Cherry MX Pro", 129.99, "RGB mechanical keyboard.", "cherry_mx.jpg"),
