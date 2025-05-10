@@ -93,6 +93,17 @@ def add_sample_products():
     conn = get_connection()
     cursor = conn.cursor()
     
+    # Check if the Products table exists, create it if not
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Products (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            price REAL NOT NULL,
+            description TEXT,
+            image TEXT
+        )
+    """)
+    
     sample_items = [
         ("Cherry MX Pro", 129.99, "RGB mechanical keyboard.", "cherry_mx.jpg"),
         ("Silent TypeMaster", 89.99, "Quiet mechanical keyboard.", "silent_typemaster.jpg"),
