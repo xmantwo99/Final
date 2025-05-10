@@ -1,54 +1,134 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, session
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+import pyodbc
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Models
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(150), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
+# ---------------------------
+# Database connection setup
+# ---------------------------
+def get_connection():
+    return pyodbc.connect(
+        "Driver={ODBC Driver 18 for SQL Server};"
+        "Server=tcp:keyboarddb.database.windows.net,1433;"
+        "Database=keyboarddb;"
+        "Uid=CloudSAd21ee598;"
+        "Pwd=Tellron1632;"
+        "Encrypt=yes;"
+        "TrustServerCertificate=no;"
+        "Connection Timeout=30;"
+    )
 
-class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    description = db.Column(db.String(300))
-    image = db.Column(db.String(300))
+# ---------------------------
+# User model and utilities
+# ---------------------------
+class User(UserMixin):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
 
+def get_user_by_id(user_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username FROM Users WHERE id = ?", user_id)
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if row:
+        return User(row.id, row.username)
+    return None
+
+def get_user_by_username(username):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, password_hash FROM Users WHERE username = ?", username)
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if row:
+        return {'id': row.id, 'username': row.username, 'password_hash': row.password_hash}
+    return None
+
+def create_user(username, password_hash):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO Users (username, password_hash) VALUES (?, ?)", username, password_hash)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# ---------------------------
+# Product utilities
+# ---------------------------
+def get_all_products():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, price, description, image FROM Products")
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return [{'id': r.id, 'name': r.name, 'price': r.price, 'description': r.description, 'image': r.image} for r in rows]
+
+def get_product_by_id(product_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, price, description, image FROM Products WHERE id = ?", product_id)
+    row = cursor.fetchone()
+    cursor.close()
+    conn.close()
+    if row:
+        return {'id': row.id, 'name': row.name, 'price': row.price, 'description': row.description, 'image': row.image}
+    return None
+
+def add_sample_products():
+    conn = get_connection()
+    cursor = conn.cursor()
+    sample_items = [
+        ("Cherry MX Pro", 129.99, "RGB mechanical keyboard.", "cherry_mx.jpg"),
+        ("Silent TypeMaster", 89.99, "Quiet mechanical keyboard.", "silent_typemaster.jpg"),
+        ("Gaming Blast X", 149.99, "Gaming keyboard with macros.", "gaming_blast.jpg"),
+        ("Minimalist 60%", 99.99, "Compact wireless 60% keyboard.", "minimalist.jpg"),
+        ("ErgoBoard Split", 159.99, "Ergonomic split keyboard.", "ergoboard.jpg")
+    ]
+    cursor.executemany("INSERT INTO Products (name, price, description, image) VALUES (?, ?, ?, ?)", sample_items)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+# ---------------------------
+# Flask-Login integration
+# ---------------------------
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return get_user_by_id(user_id)
 
+# ---------------------------
 # Routes
+# ---------------------------
 @app.route('/')
 def home():
     return render_template('home.html', user=current_user)
 
 @app.route('/products')
 def products():
-    products = Product.query.all()
-    return render_template('products.html', user=current_user, products=products)
+    product_list = get_all_products()
+    return render_template('products.html', user=current_user, products=product_list)
 
 @app.route('/add_to_cart/<int:product_id>')
 def add_to_cart(product_id):
     if not current_user.is_authenticated:
         flash("You must be logged in to add items to the cart.", "danger")
         return redirect(url_for('login'))
-    product = Product.query.get_or_404(product_id)
+    product = get_product_by_id(product_id)
     cart = session.get('cart', {})
     cart[str(product_id)] = cart.get(str(product_id), 0) + 1
     session['cart'] = cart
-    flash(f"{product.name} added to your cart!", "success")
+    flash(f"{product['name']} added to your cart!", "success")
     return redirect(url_for('products'))
 
 @app.route('/add_custom_build')
@@ -57,8 +137,7 @@ def add_custom_build():
         flash("Please log in to add a custom build.", "danger")
         return redirect(url_for('login'))
     cart = session.get('cart', {})
-    custom_key = 'custom_build'
-    cart[custom_key] = cart.get(custom_key, 0) + 1
+    cart['custom_build'] = cart.get('custom_build', 0) + 1
     session['cart'] = cart
     flash("Custom keyboard build added to cart!", "success")
     return redirect(url_for('home'))
@@ -79,17 +158,12 @@ def cart():
     total = 0
     for product_id, quantity in cart.items():
         if product_id == 'custom_build':
-            name = "Custom Keyboard Build"
-            price = 175.00
-            item_total = price * quantity
-            total += item_total
-            items.append({'product': {'name': name, 'price': price}, 'quantity': quantity, 'total': item_total})
+            item = {'product': {'name': "Custom Keyboard Build", 'price': 175.00}, 'quantity': quantity, 'total': 175.00 * quantity}
         else:
-            product = Product.query.get(int(product_id))
-            if product:
-                item_total = product.price * quantity
-                total += item_total
-                items.append({'product': product, 'quantity': quantity, 'total': item_total})
+            product = get_product_by_id(int(product_id))
+            item = {'product': product, 'quantity': quantity, 'total': product['price'] * quantity}
+        items.append(item)
+        total += item['total']
     return render_template('cart.html', user=current_user, items=items, total=total)
 
 @app.route('/checkout')
@@ -102,9 +176,9 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password_hash, password):
-            login_user(user)
+        user_data = get_user_by_username(username)
+        if user_data and check_password_hash(user_data['password_hash'], password):
+            login_user(User(user_data['id'], user_data['username']))
             return redirect(url_for('home'))
         flash('Invalid username or password.', 'danger')
     return render_template('login.html')
@@ -114,13 +188,11 @@ def signup():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if User.query.filter_by(username=username).first():
+        if get_user_by_username(username):
             flash('Username already exists.', 'danger')
         else:
             hashed_pw = generate_password_hash(password)
-            new_user = User(username=username, password_hash=hashed_pw)
-            db.session.add(new_user)
-            db.session.commit()
+            create_user(username, hashed_pw)
             flash('Account created! You can now log in.', 'success')
             return redirect(url_for('login'))
     return render_template('signup.html')
@@ -144,19 +216,9 @@ def builder_preview():
     return render_template('builder_preview.html', switches=switches, layout=layout, case=case)
 
 @app.route('/add-sample-products')
-def add_sample_products():
-    sample_items = [
-        Product(name="Cherry MX Pro", price=129.99, description="RGB mechanical keyboard.", image="cherry_mx.jpg"),
-        Product(name="Silent TypeMaster", price=89.99, description="Quiet mechanical keyboard for office use.", image="silent_typemaster.jpg"),
-        Product(name="Gaming Blast X", price=149.99, description="High-performance gaming keyboard with macros.", image="gaming_blast.jpg"),
-        Product(name="Minimalist 60%", price=99.99, description="Compact wireless 60% keyboard.", image="minimalist.jpg"),
-        Product(name="ErgoBoard Split", price=159.99, description="Ergonomic split layout mechanical keyboard.", image="ergoboard.jpg"),
-    ]
-    db.session.bulk_save_objects(sample_items)
-    db.session.commit()
+def add_sample_products_route():
+    add_sample_products()
     return "Sample products added!"
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
