@@ -2,12 +2,16 @@ from flask import Flask, render_template, redirect, url_for, request, flash, ses
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 import pyodbc
+from auth import auth_bp
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+
+app.register_blueprint(auth_bp)
 
 # ---------------------------
 # Database connection setup
@@ -88,6 +92,26 @@ def get_product_by_id(product_id):
 def add_sample_products():
     conn = get_connection()
     cursor = conn.cursor()
+    
+    # Check if the Products table exists, create it if not
+   
+    cursor.execute("""
+        IF NOT EXISTS (
+            SELECT * FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_NAME = 'Products'
+        )
+        BEGIN
+            CREATE TABLE Products (
+                id INT IDENTITY(1,1) PRIMARY KEY,
+                name NVARCHAR(100) NOT NULL UNIQUE,
+                price FLOAT NOT NULL,
+                description NVARCHAR(300),
+                image NVARCHAR(300)
+            )
+        END
+    """)
+
+    
     sample_items = [
         ("Cherry MX Pro", 129.99, "RGB mechanical keyboard.", "cherry_mx.jpg"),
         ("Silent TypeMaster", 89.99, "Quiet mechanical keyboard.", "silent_typemaster.jpg"),
@@ -95,10 +119,27 @@ def add_sample_products():
         ("Minimalist 60%", 99.99, "Compact wireless 60% keyboard.", "minimalist.jpg"),
         ("ErgoBoard Split", 159.99, "Ergonomic split keyboard.", "ergoboard.jpg")
     ]
-    cursor.executemany("INSERT INTO Products (name, price, description, image) VALUES (?, ?, ?, ?)", sample_items)
-    conn.commit()
-    cursor.close()
-    conn.close()
+    
+    try:
+        for item in sample_items:
+            # Check if the product already exists in the table by name
+            cursor.execute("SELECT 1 FROM Products WHERE name = ?", (item[0],))
+            result = cursor.fetchone()
+            
+            if result is None:
+                # Insert the product if it doesn't exist
+                cursor.execute("INSERT INTO Products (name, price, description, image) VALUES (?, ?, ?, ?)", item)
+                print(f"Added product: {item[0]}")
+            else:
+                print(f"Product '{item[0]}' already exists.")
+        
+        conn.commit()
+    except Exception as e:
+        print(f"Error occurred: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 
 # ---------------------------
 # Flask-Login integration
@@ -113,6 +154,10 @@ def load_user(user_id):
 @app.route('/')
 def home():
     return render_template('home.html', user=current_user)
+
+@app.route('/me')
+def me():
+    return session.get('user', {})
 
 @app.route('/test')
 def test():
