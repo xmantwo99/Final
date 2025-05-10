@@ -28,8 +28,4 @@ jobs:
       with:
         app-name: FireKeyboards
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-<<<<<<< HEAD
         package: .
-=======
-        package: .
->>>>>>> 0e04b8831dd4dda1d8eb8f9f1e6a5f633fa73ae2
