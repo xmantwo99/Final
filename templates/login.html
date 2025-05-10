@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <meta charset="UTF-8">
+    <meta name="google-signin-client_id" content="787693943287-knvronuchakt4d7s3ued57k3oq2sdurh.apps.googleusercontent.com">
     <title>Login | Cherry Boards</title>
     <style>
         body {
@@ -82,7 +84,7 @@
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
-
+        <div class="g-signin2" data-onsuccess="onSignIn"></div>
         <a href="{{ url_for('signup') }}">Don't have an account? Sign up</a>
     </div>
 </body>
