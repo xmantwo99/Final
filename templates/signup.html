@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <meta charset="UTF-8">
     <title>Sign Up | Cherry Boards</title>
+
+    <!-- Google Sign-In client ID -->
+    <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+
     <style>
         body {
             background-color: #0d0d0d;
@@ -58,8 +63,38 @@
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Sign Up</button>
         </form>
+        
+        <!-- Google Sign-In Button -->
         <div class="g-signin2" data-onsuccess="onSignIn"></div>
+
         <a href="{{ url_for('login') }}">Already have an account? Login</a>
     </div>
+
+    <script>
+        function onSignIn(googleUser) {
+            const profile = googleUser.getBasicProfile();
+            console.log('ID: ' + profile.getId());
+            console.log('Name: ' + profile.getName());
+            console.log('Image URL: ' + profile.getImageUrl());
+            console.log('Email: ' + profile.getEmail());
+
+            // Send ID token to your server with AJAX/fetch
+            const id_token = googleUser.getAuthResponse().id_token;
+            fetch('/google-signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: id_token }),
+            }).then(response => response.json())
+              .then(data => {
+                  console.log('Server response:', data);
+                  // Redirect or show success message
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        }
+    </script>
 </body>
 </html>
+
