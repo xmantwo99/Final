@@ -114,6 +114,10 @@ def load_user(user_id):
 def home():
     return render_template('home.html', user=current_user)
 
+@app.route('/test')
+def home():
+    return render_template('test.html', user=current_user)
+
 @app.route('/products')
 def products():
     product_list = get_all_products()
