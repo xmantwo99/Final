@@ -112,7 +112,8 @@
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    window.location.href = '/dashboard';
+                    window.location.href = '/';
+
                 } else {
                     alert("Google sign-in failed: " + data.message);
                 }
