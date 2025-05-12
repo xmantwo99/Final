@@ -6,7 +6,7 @@
 
     <!-- New Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <meta name="google-signin-client_id" content="787693943287-knvronuchakt4d7s3ued57k3oq2sdurh.apps.googleusercontent.com">
+    <meta name="google-signin-client_id" content="288200736270-vc4er89mo72r3lhc79ai908if78jh896.apps.googleusercontent.com">
 
     <style>
         body {
@@ -90,7 +90,7 @@
 
         <!-- Google Sign-In button -->
         <div id="g_id_onload"
-            data-client_id="787693943287-knvronuchakt4d7s3ued57k3oq2sdurh.apps.googleusercontent.com"
+            data-client_id="288200736270-vc4er89mo72r3lhc79ai908if78jh896.apps.googleusercontent.com"
             data-context="signin"
             data-ux_mode="popup"
             data-callback="handleCredentialResponse">
@@ -113,7 +113,6 @@
             .then(data => {
                 if (data.success) {
                     window.location.href = '/';
-
                 } else {
                     alert("Google sign-in failed: " + data.message);
                 }
