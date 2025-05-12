@@ -390,5 +390,3 @@ class TestGeneralPages:
             assert response.status_code == 200
             assert b'welcome, testuser' in response.data.lower() or b'logged in as testuser' in response.data.lower() # Check for user-specific greeting
 
-    def test_test_page(self, client):
-        """Ensures the test page loads."""
