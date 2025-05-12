@@ -18,7 +18,11 @@ def login_with_google():
             'name': idinfo.get('name', '')
         }
 
-        return jsonify({'message': f"Welcome {idinfo.get('name', '')}", 'success': True}), 200
+        return jsonify({
+            'message': f"Welcome {idinfo.get('name', '')}",
+            'success': True,
+            'redirect': '/'
+        }), 200
     except ValueError as ve:
         return jsonify({'error': 'Invalid token', 'success': False, 'message': str(ve)}), 400
     except Exception as e:
@@ -35,7 +39,11 @@ def google_signin():
             'name': idinfo.get('name', '')
         }
 
-        return jsonify({'success': True, 'message': f"Welcome {idinfo.get('name', '')}"}), 200
+        return jsonify({
+            'success': True,
+            'message': f"Welcome {idinfo.get('name', '')}",
+            'redirect': '/'  # ✅ key fix added here
+        }), 200
     except Exception as e:
         print("Google sign-in error:", e)
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -44,3 +52,4 @@ def google_signin():
 def logout():
     session.pop('user', None)
     return jsonify({'message': 'Logged out', 'success': True}), 200
+
