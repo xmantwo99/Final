@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify, session
 from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
+from flask_login import login_user
+from app import get_user_by_username, create_user, User  
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -34,15 +36,23 @@ def google_signin():
         token = request.json.get('token')
         idinfo = id_token.verify_oauth2_token(token, grequests.Request(), GOOGLE_CLIENT_ID)
 
-        session['user'] = {
-            'email': idinfo['email'],
-            'name': idinfo.get('name', '')
-        }
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+
+        user_data = get_user_by_username(email)
+        if not user_data:
+            create_user(email, "")  # ✅ Create new user with blank password
+
+        user_data = get_user_by_username(email)  # ✅ Re-fetch to get ID
+        user_obj = User(user_data['id'], user_data['username'])  # ✅ Wrap in User model
+        login_user(user_obj)  # ✅ Actually log the user in
+
+        session['user'] = {'email': email, 'name': name}  # Optional: still storing in session
 
         return jsonify({
             'success': True,
-            'message': f"Welcome {idinfo.get('name', '')}",
-            'redirect': '/'  # ✅ key fix added here
+            'message': f"Welcome {name}",
+            'redirect': '/'
         }), 200
     except Exception as e:
         print("Google sign-in error:", e)
@@ -52,4 +62,3 @@ def google_signin():
 def logout():
     session.pop('user', None)
     return jsonify({'message': 'Logged out', 'success': True}), 200
-
