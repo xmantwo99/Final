@@ -3,7 +3,7 @@ from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
 
 auth_bp = Blueprint('auth', __name__)
-GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"
+GOOGLE_CLIENT_ID = "288200736270-vc4er89mo72r3lhc79ai908if78jh896.apps.googleusercontent.com"
 
 @auth_bp.route('/login-with-google', methods=['POST'])
 def login_with_google():
