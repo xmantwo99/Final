@@ -26,9 +26,10 @@ def get_connection():
         "Uid=CloudSAd21ee598;"
         "Pwd=Tellron1632;"
         "Encrypt=yes;"
-        "TrustServerCertificate=no;"
+        "TrustServerCertificate=yes;"
         "Connection Timeout=30;"
     )
+
 
 # ---------------------------
 # User model and utilities
