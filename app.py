@@ -3,7 +3,8 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from werkzeug.security import generate_password_hash, check_password_hash
 import pyodbc
 from auth import auth_bp
-
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -245,6 +246,29 @@ def signup():
             flash('Account created! You can now log in.', 'success')
             return redirect(url_for('login'))
     return render_template('signup.html')
+
+
+@app.route('/google-signin', methods=['POST'])
+def google_signin():
+    try:
+        token = request.json.get('token')
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), "YOUR_GOOGLE_CLIENT_ID")
+
+        # Extract user info
+        email = idinfo['email']
+        name = idinfo.get('name', '')
+
+        # Check if user exists or create new one
+        user = get_user_by_username(email)
+        if not user:
+            create_user(email, "")  # Optionally generate a random password or leave blank
+
+        # Log the user in (use your session/login logic here)
+        session['user'] = email
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Google Sign-In error:", e)
+        return jsonify({"success": False, "error": str(e)})
 
 @app.route('/logout')
 @login_required

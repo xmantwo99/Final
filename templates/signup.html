@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Sign Up | Cherry Boards</title>
-
-    <!-- New Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-
 
     <style>
         body {
@@ -63,7 +60,7 @@
             <button type="submit">Sign Up</button>
         </form>
 
-        <!-- New Google Sign-In Button -->
+        <!-- Google Sign-In Button -->
         <div id="buttonDiv" style="margin-top: 20px;"></div>
 
         <a href="{{ url_for('login') }}">Already have an account? Login</a>
@@ -71,28 +68,38 @@
 
     <script>
         window.onload = function () {
-        google.accounts.id.initialize({
-            client_id: "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
-            callback: handleCredentialResponse
-        });
-        google.accounts.id.renderButton(
-            document.getElementById("buttonDiv"),
-            { theme: "outline", size: "large" }
-        );
-    };
+            google.accounts.id.initialize({
+                client_id: 'YOUR_GOOGLE_CLIENT_ID',
+                callback: handleCredentialResponse
+            });
 
-    function handleCredentialResponse(response) {
-        fetch('/login-with-google', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id_token: response.credential })
-        })
-        .then(res => res.json())
-        .then(data => {
-            alert(data.message);
-            location.reload();
-        });
-    }
+            google.accounts.id.renderButton(
+                document.getElementById('buttonDiv'),
+                { theme: 'outline', size: 'large' }
+            );
+        };
+
+        function handleCredentialResponse(response) {
+            console.log("Encoded JWT ID token: " + response.credential);
+
+            fetch('/google-signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: response.credential }),
+            }).then(res => res.json())
+              .then(data => {
+                  console.log('Server response:', data);
+                  if (data.success) {
+                      window.location.href = '/dashboard'; // redirect on success
+                  } else {
+                      alert('Google sign-in failed.');
+                  }
+              }).catch(error => {
+                  console.error('Error:', error);
+              });
+        }
     </script>
 </body>
 </html>
