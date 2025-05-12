@@ -91,7 +91,7 @@
               .then(data => {
                   console.log('Server response:', data);
                   if (data.success) {
-                      window.location.href = '/'; // redirect on success
+                      window.location.href = data.redirect || '/';
                   } else {
                       alert('Google sign-in failed.');
                   }
