@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, redirect, url_for
 from google.oauth2 import id_token
 from google.auth.transport import requests as grequests
 
@@ -18,7 +18,7 @@ def login_with_google():
             'name': user_name
         }
 
-        return jsonify({'message': f'Welcome {user_name}'}), 200
+        return redirect(url_for('home'))  # Redirect to your homepage after login
     except ValueError:
         return jsonify({'error': 'Invalid token'}), 400
 
@@ -26,3 +26,4 @@ def login_with_google():
 def logout():
     session.pop('user', None)
     return jsonify({'message': 'Logged out'}), 200
+
