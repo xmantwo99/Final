@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, session
+from flask import Flask, render_template, redirect, url_for, request, flash, session, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 import pyodbc
@@ -252,7 +252,7 @@ def signup():
 def google_signin():
     try:
         token = request.json.get('token')
-        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), "YOUR_GOOGLE_CLIENT_ID")
+        idinfo = id_token.verify_oauth2_token(token, google_requests.Request(), "288200736270-vc4er89mo72r3lhc79ai908if78jh896.apps.googleusercontent.com")
 
         # Extract user info
         email = idinfo['email']
